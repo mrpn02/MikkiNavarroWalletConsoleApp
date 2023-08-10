@@ -2,13 +2,14 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
+using System.Configuration;
 using System.Text;
 
 namespace MikkiNavarroWalletConsoleApp
 {
     class Program
     {
-        static string connectionString = "Data Source=DESKTOP-3T6HMLN;Initial Catalog=ConsoleWallet;Persist Security Info=True;User ID=AppDB;Password=app"; // Replace with your connection string
+        static string connectionString = ConfigurationManager.ConnectionStrings["walletAppDBConnection"].ConnectionString;
 
         static void Main(string[] args)
         {
@@ -143,12 +144,14 @@ namespace MikkiNavarroWalletConsoleApp
         {
             while (true)
             {
+                Console.WriteLine("----------------------------------");
                 Console.WriteLine("Choose an option:");
                 Console.WriteLine("1. Deposit");
                 Console.WriteLine("2. Withdraw");
                 Console.WriteLine("3. Transfer");
                 Console.WriteLine("4. View Transaction History");
                 Console.WriteLine("0. Logout");
+                Console.WriteLine("----------------------------------");
                 var option = Console.ReadLine();
 
                 switch (option)
