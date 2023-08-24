@@ -326,6 +326,17 @@ namespace MikkiNavarroWalletConsoleApp
 
         static void Transfer(string accountNumberFrom, string accountNumberTo, decimal amount, int userIdFrom, int userIdTo)
         {
+            //before processing transaction, check the following possible logic loopholes
+            if (amount <= 0)
+            {
+                throw new ArgumentException("Amount to transfer should be greater than zero.");
+            }
+
+            if (string.Equals(accountNumberFrom, accountNumberTo))
+            {
+                throw new ArgumentException("Source and destination accounts cannot be the same.");
+            }
+
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 using (SqlCommand command = new SqlCommand("sp_TransferFunds", connection))
