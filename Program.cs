@@ -4,6 +4,10 @@ using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Configuration;
 using System.Text;
+using MikkiNavarroWalletConsoleApp.Service;
+using MikkiNavarroWalletConsoleApp.Interfaces;
+using MikkiNavarroWalletConsoleApp.DBHelper;
+
 
 namespace MikkiNavarroWalletConsoleApp
 {
@@ -172,9 +176,14 @@ namespace MikkiNavarroWalletConsoleApp
                             Console.WriteLine("Enter recipient's User ID (you must know this):");
                             if (int.TryParse(Console.ReadLine(), out int userIdTo))
                             {
-                                Transfer(accountNumber, accountNumberTo, amount, userId, userIdTo);
-                                // Assuming you also retrieve the updated balance after transferring
-                                //balance = GetBalance(userId, accountNumber);
+                                // Manually create the database instance
+                                ITransaction database = new DBHelper.DBHelper.TransactionalDatabase (connectionString);
+
+                                // Create the service with the database instance
+                                ITransferFundService transactionService = new TransferFundService(database);
+
+                                // Call the service
+                                transactionService.Transfer(accountNumber, accountNumberTo, amount, userId, userIdTo);
                             }
                             else
                             {
@@ -318,64 +327,6 @@ namespace MikkiNavarroWalletConsoleApp
                     {
                         Console.WriteLine("An error occurred: " + e.Message);
                         return 0; 
-                    }
-                }
-            }
-        }
-
-
-        static void Transfer(string accountNumberFrom, string accountNumberTo, decimal amount, int userIdFrom, int userIdTo)
-        {
-            //before processing transaction, check the following possible logic loopholes
-            if (amount <= 0)
-            {
-                throw new ArgumentException("Amount to transfer should be greater than zero.");
-            }
-
-            if (string.Equals(accountNumberFrom, accountNumberTo))
-            {
-                throw new ArgumentException("Source and destination accounts cannot be the same.");
-            }
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                using (SqlCommand command = new SqlCommand("sp_TransferFunds", connection))
-                {
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@Amount", amount);
-                    command.Parameters.AddWithValue("@AccountNumberFrom", accountNumberFrom);
-                    command.Parameters.AddWithValue("@AccountNumberTo", accountNumberTo);
-                    command.Parameters.AddWithValue("@UserIdFrom", userIdFrom);
-                    command.Parameters.AddWithValue("@UserIdTo", userIdTo);
-                    SqlParameter newBalanceFromParam = new SqlParameter
-                    {
-                        ParameterName = "@NewBalanceFrom",
-                        SqlDbType = SqlDbType.Decimal,
-                        Direction = ParameterDirection.Output
-                    };
-                    SqlParameter newBalanceToParam = new SqlParameter
-                    {
-                        ParameterName = "@NewBalanceTo",
-                        SqlDbType = SqlDbType.Decimal,
-                        Direction = ParameterDirection.Output
-                    };
-                    command.Parameters.Add(newBalanceFromParam);
-                    command.Parameters.Add(newBalanceToParam);
-
-                    connection.Open();
-                    command.ExecuteNonQuery();
-
-                    if (newBalanceFromParam.Value != DBNull.Value && newBalanceToParam.Value != DBNull.Value)
-                    {
-                        // Handle success
-                        Console.WriteLine($"Transaction Successful!");
-                        Console.WriteLine($"Amount Transferred: {amount}");
-                        Console.WriteLine($"From Account Number: {accountNumberFrom}");
-                        Console.WriteLine($"To Account Number: {accountNumberTo}");
-                    }
-                    else
-                    {
-                        throw new Exception("Transfer failed. Insufficient funds or an error occurred.");
                     }
                 }
             }
