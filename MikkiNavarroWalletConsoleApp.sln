@@ -5,7 +5,7 @@ VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MikkiNavarroWalletConsoleApp", "MikkiNavarroWalletConsoleApp.csproj", "{865B433C-45B3-4C95-9246-D3D8DF8A4DDB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikkiNavarroWalletConsoleTest", "..\MikkiNavarroWalletConsoleTest\MikkiNavarroWalletConsoleTest.csproj", "{5CB4F3F5-8B95-47DB-9DAE-C0796ACE4CE8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikkiNavarroWalletConsoleTest", "MikkiNavarroWalletConsoleTest\MikkiNavarroWalletConsoleTest.csproj", "{5CB4F3F5-8B95-47DB-9DAE-C0796ACE4CE8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

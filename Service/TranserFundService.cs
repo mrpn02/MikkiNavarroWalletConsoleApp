@@ -25,7 +25,7 @@ namespace MikkiNavarroWalletConsoleApp.Service
 
         public void Transfer(string accountNumberFrom, string accountNumberTo, decimal amount, int userIdFrom, int userIdTo)
         {
-            // Pre-transfer checks dont allow, negative or 0 transfers. dont allow same account number transfers
+            // Pre-transfer checks, dont allow negative or 0 transfers. dont allow same account number transfers
             if (amount <= 0)
             {
                 throw new ArgumentException("Amount to transfer should be greater than zero.");
