@@ -43,12 +43,12 @@ namespace MikkiNavarroWalletConsoleApp.DBHelper
 
             public void Commit()
             {
-                Transaction?.Commit();
+                Transaction.Commit();
             }
 
             public void Rollback()
             {
-                Transaction?.Rollback();
+                Transaction.Rollback();
             }
         }
     }

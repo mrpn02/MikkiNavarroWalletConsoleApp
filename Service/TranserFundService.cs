@@ -36,43 +36,60 @@ namespace MikkiNavarroWalletConsoleApp.Service
                 throw new ArgumentException("Source and destination accounts cannot be the same.");
             }
 
-            using var command = _database.CreateCommand("sp_TransferFunds", CommandType.StoredProcedure);
-            command.Parameters.AddWithValue("@Amount", amount);
-            command.Parameters.AddWithValue("@AccountNumberFrom", accountNumberFrom);
-            command.Parameters.AddWithValue("@AccountNumberTo", accountNumberTo);
-            command.Parameters.AddWithValue("@UserIdFrom", userIdFrom);
-            command.Parameters.AddWithValue("@UserIdTo", userIdTo);
+            // Start the transaction
+            var transaction = _database.BeginTransaction();
 
-            SqlParameter newBalanceFromParam = new SqlParameter
+            try
             {
-                ParameterName = "@NewBalanceFrom",
-                SqlDbType = SqlDbType.Decimal,
-                Direction = ParameterDirection.Output
-            };
-            SqlParameter newBalanceToParam = new SqlParameter
-            {
-                ParameterName = "@NewBalanceTo",
-                SqlDbType = SqlDbType.Decimal,
-                Direction = ParameterDirection.Output
-            };
-            command.Parameters.Add(newBalanceFromParam);
-            command.Parameters.Add(newBalanceToParam);
+                using var command = _database.CreateCommand("sp_TransferFunds", CommandType.StoredProcedure);
+                command.Transaction = transaction;
+                command.Parameters.AddWithValue("@Amount", amount);
+                command.Parameters.AddWithValue("@AccountNumberFrom", accountNumberFrom);
+                command.Parameters.AddWithValue("@AccountNumberTo", accountNumberTo);
+                command.Parameters.AddWithValue("@UserIdFrom", userIdFrom);
+                command.Parameters.AddWithValue("@UserIdTo", userIdTo);
 
-            command.ExecuteNonQuery();
+                SqlParameter newBalanceFromParam = new SqlParameter
+                {
+                    ParameterName = "@NewBalanceFrom",
+                    SqlDbType = SqlDbType.Decimal,
+                    Direction = ParameterDirection.Output
+                };
+                SqlParameter newBalanceToParam = new SqlParameter
+                {
+                    ParameterName = "@NewBalanceTo",
+                    SqlDbType = SqlDbType.Decimal,
+                    Direction = ParameterDirection.Output
+                };
+                command.Parameters.Add(newBalanceFromParam);
+                command.Parameters.Add(newBalanceToParam);
 
-            if (newBalanceFromParam.Value != DBNull.Value && newBalanceToParam.Value != DBNull.Value)
-            {
-                // Handle success
-                Console.WriteLine($"Transaction Successful!");
-                Console.WriteLine($"Amount Transferred: {amount}");
-                Console.WriteLine($"From Account Number: {accountNumberFrom}");
-                Console.WriteLine($"To Account Number: {accountNumberTo}");
+                command.ExecuteNonQuery();
+
+                if (newBalanceFromParam.Value != DBNull.Value && newBalanceToParam.Value != DBNull.Value)
+                {
+                    // Handle success
+                    Console.WriteLine($"Transaction Successful!");
+                    Console.WriteLine($"Amount Transferred: {amount}");
+                    Console.WriteLine($"From Account Number: {accountNumberFrom}");
+                    Console.WriteLine($"To Account Number: {accountNumberTo}");
+
+                    // Commit the transaction upon success
+                    transaction.Commit();
+                }
+                else
+                {
+                    throw new Exception("Transfer failed. Insufficient funds or an error occurred.");
+                }
             }
-            else
+            catch
             {
-                throw new Exception("Transfer failed. Insufficient funds or an error occurred.");
+                // Rollback the transaction in case of any failures
+                transaction.Rollback();
+                throw; // Re-throw the caught exception for handling by caller
             }
         }
+
     }
 
 }
