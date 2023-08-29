@@ -4,6 +4,8 @@ CREATE PROCEDURE sp_TransferFunds
     @AccountNumberTo BIGINT,
     @UserIdFrom INT,
     @UserIdTo INT,
+    @RowVersionFrom ROWVERSION,
+    @RowVersionTo ROWVERSION,
     @NewBalanceFrom DECIMAL(18, 2) OUTPUT,
     @NewBalanceTo DECIMAL(18, 2) OUTPUT
 AS
@@ -11,10 +13,27 @@ BEGIN
     BEGIN TRANSACTION;
 
     DECLARE @CurrentBalanceFrom DECIMAL(18, 2);
+    DECLARE @CurrentRowVersionFrom ROWVERSION;
+    
     DECLARE @CurrentBalanceTo DECIMAL(18, 2);
+    DECLARE @CurrentRowVersionTo ROWVERSION;
 
-    SELECT @CurrentBalanceFrom = Balance FROM Users WHERE AccountNumber = @AccountNumberFrom;
-    SELECT @CurrentBalanceTo = Balance FROM Users WHERE AccountNumber = @AccountNumberTo;
+    SELECT 
+        @CurrentBalanceFrom = Balance, 
+        @CurrentRowVersionFrom = AccountRowVersion 
+    FROM Users WHERE AccountNumber = @AccountNumberFrom;
+
+    SELECT 
+        @CurrentBalanceTo = Balance, 
+        @CurrentRowVersionTo = AccountRowVersion 
+    FROM Users WHERE AccountNumber = @AccountNumberTo;
+
+    IF @CurrentRowVersionFrom != @RowVersionFrom OR @CurrentRowVersionTo != @RowVersionTo
+    BEGIN
+        ROLLBACK TRANSACTION;
+        RAISERROR('Concurrency conflict detected. Transaction aborted.', 16, 1);
+        RETURN;
+    END
 
     IF @CurrentBalanceFrom >= @Amount
     BEGIN

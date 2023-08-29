@@ -177,13 +177,23 @@ namespace MikkiNavarroWalletConsoleApp
                             if (int.TryParse(Console.ReadLine(), out int userIdTo))
                             {
                                 // Manually create the database instance
-                                ITransaction database = new DBHelper.DBHelper.TransactionalDatabase (connectionString);
+                                IDatabase dbUser = new DBHelper.DBHelper.Database(connectionString);
+                                ITransaction database = new DBHelper.DBHelper.TransactionalDatabase(connectionString);
+
+                                FetchAccountInformationService fetchService = new FetchAccountInformationService(dbUser);
+
+                                //retrieve the rowversion bytes for concurrency
+                                AccountInformation accountInfoFrom = fetchService.FetchByAccountNumber(accountNumber);
+                                AccountInformation accountInfoTo = fetchService.FetchByAccountNumber(accountNumberTo);
+
+                                byte[] rowVersionFromAccountNumberTo = accountInfoTo.AccountRowVersion;
+                                byte[] rowVersionFromAccountNumberFrom = accountInfoFrom.AccountRowVersion;
 
                                 // Create the service with the database instance
                                 ITransferFundService transactionService = new TransferFundService(database);
 
                                 // Call the service
-                                transactionService.Transfer(accountNumber, accountNumberTo, amount, userId, userIdTo);
+                                transactionService.Transfer(accountNumber, accountNumberTo, amount, userId, userIdTo, rowVersionFromAccountNumberFrom, rowVersionFromAccountNumberTo);
                             }
                             else
                             {
